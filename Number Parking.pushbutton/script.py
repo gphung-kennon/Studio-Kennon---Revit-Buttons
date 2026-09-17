@@ -109,7 +109,37 @@ for el in filtered_parking:
 
 entries.sort(key=lambda pair: pair[0])
 
-# ---------- 6. Ask for the target parameter name ----------
+# ---------- 6. Ask for numbering options ----------
+prefix = forms.ask_for_string(
+    default="",
+    prompt="Optional prefix (leave blank for numbers only):",
+    title="Parking Number Prefix",
+)
+if prefix is None:
+    script.exit()
+
+start_number_text = forms.ask_for_string(
+    default="1",
+    prompt="Starting number:",
+    title="Parking Start Number",
+)
+if start_number_text is None:
+    script.exit()
+
+try:
+    start_number = int(start_number_text.strip())
+except (ValueError, AttributeError):
+    forms.alert("Starting number must be a whole number.", exitscript=True)
+
+suffix = forms.ask_for_string(
+    default="",
+    prompt="Optional suffix (leave blank for numbers only):",
+    title="Parking Number Suffix",
+)
+if suffix is None:
+    script.exit()
+
+# ---------- 7. Ask for the target parameter name ----------
 param_name = forms.ask_for_string(
     default="Carpark_Number",
     prompt="Parameter name to write the sequence number to:",
@@ -118,24 +148,37 @@ param_name = forms.ask_for_string(
 if not param_name:
     script.exit()
 
-# ---------- 7. Write sequential numbers ----------
+# ---------- 8. Write sequential numbers ----------
 failed = []
 with revit.Transaction("Number Parking Spaces"):
-    for i, (_, el) in enumerate(entries, start=1):
+    for index, (_, el) in enumerate(entries):
+        number = start_number + index
+        value = "{}{}{}".format(prefix, number, suffix)
+
         p = el.LookupParameter(param_name)
         if p is None or p.IsReadOnly:
             failed.append(el.Id)
             continue
         if p.StorageType == DB.StorageType.String:
-            p.Set(str(i))
+            p.Set(value)
         elif p.StorageType == DB.StorageType.Integer:
-            p.Set(i)
+            # Prefix/suffix cannot be represented by numeric Revit parameters.
+            # Preserve the existing numeric behaviour only when both are blank.
+            if prefix or suffix:
+                failed.append(el.Id)
+                continue
+            p.Set(number)
         elif p.StorageType == DB.StorageType.Double:
-            p.Set(float(i))
+            # Prefix/suffix cannot be represented by numeric Revit parameters.
+            # Preserve the existing numeric behaviour only when both are blank.
+            if prefix or suffix:
+                failed.append(el.Id)
+                continue
+            p.Set(float(number))
         else:
             failed.append(el.Id)
 
-# ---------- 8. Report ----------
+# ---------- 9. Report ----------
 output.print_md("**Numbered {} of {} stall(s) ({}) on level '{}'.**".format(
     len(entries) - len(failed),
     len(filtered_parking),

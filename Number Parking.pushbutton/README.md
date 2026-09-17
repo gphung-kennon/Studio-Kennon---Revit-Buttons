@@ -217,6 +217,54 @@ selected curve.
 
 ------------------------------------------------------------------------
 
+## Numbering options
+
+Before choosing the target parameter, the tool asks for three numbering
+options:
+
+``` text
+Prefix:       [          ]
+Starting no.: [ 1        ]
+Suffix:       [          ]
+```
+
+Prefix and suffix are optional. If both are left blank and the starting
+number is `1`, the behaviour is unchanged:
+
+``` text
+1
+2
+3
+4
+...
+```
+
+Examples:
+
+``` text
+Prefix = B
+Start  = 101
+Suffix =
+
+→ B101, B102, B103...
+```
+
+``` text
+Prefix = P
+Start  = 1
+Suffix = A
+
+→ P1A, P2A, P3A...
+```
+
+The prefix and suffix require the target Revit parameter to be a **Text**
+parameter. Integer and Number parameters continue to work when both
+prefix and suffix are blank.
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
 ## What gets skipped?
 
 A parking element can be skipped if the tool cannot determine a usable
